@@ -31,7 +31,7 @@ def predict(update, context):
         answer = random.choice(predictions)
         update.message.reply_text(answer)
     else:
-        update.message.reply_text("Напиши питання після команди /predict")
+        update.message.reply_text("Напиши питання після команди /pred")
 
 # Основна функція запуску бота
 def main():
