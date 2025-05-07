@@ -1,11 +1,14 @@
 from telegram.ext import Updater, CommandHandler
 import random
+from datetime import datetime
 import os
 import praw
 import requests
 from dotenv import load_dotenv
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
+
+load_dotenv()
 
 # відкрили порт щоб бот не спав
 class SimpleHandler(BaseHTTPRequestHandler):
@@ -25,10 +28,6 @@ def run_server():
 
 threading.Thread(target=run_server).start()
 
-
-
-
-load_dotenv()
 
 # Список передбачень
 predictions = [
@@ -80,6 +79,24 @@ def send_reddit_meme(update, context):
 
     update.message.reply_text("Не знайшов мемів 😢")
 
+# Функція факт з вікі
+def today_event(update, context):
+    today = datetime.now()
+    url = f"https://uk.wikipedia.org/api/rest_v1/feed/onthisday/events/{today.month}/{today.day}"
+
+    try:
+        response = requests.get(url)
+        data = response.json()
+
+        if "events" in data and data["events"]:
+            event = random.choice(data["events"])
+            text = event.get("text", "Сьогодні нічого особливого не сталося.")
+            update.message.reply_text(f"📅 {text}")
+        else:
+            update.message.reply_text("Немає доступних подій на сьогодні.")
+    except Exception as e:
+        update.message.reply_text("Не вдалося отримати дані з Вікіпедії.")
+
     
 
 # Основна функція запуску бота
@@ -90,6 +107,7 @@ def main():
 
     dp.add_handler(CommandHandler("pred", predict))
     dp.add_handler(CommandHandler("meme", send_reddit_meme))
+    dp.add_handler(CommandHandler("today", today_event))
 
     updater.start_polling()
     print("Бот працює...")
