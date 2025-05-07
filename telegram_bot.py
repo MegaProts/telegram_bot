@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
+# відкрили порт щоб бот не спав
 class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -14,10 +15,12 @@ class SimpleHandler(BaseHTTPRequestHandler):
         self.wfile.write(b'Bot is running')
 
 def run_server():
-    server = HTTPServer(('0.0.0.0', 10000), SimpleHandler)
+    port = int(os.environ.get("PORT", 10000))  # 👈 важливо
+    server = HTTPServer(('0.0.0.0', port), SimpleHandler)
     server.serve_forever()
 
 threading.Thread(target=run_server).start()
+
 
 
 load_dotenv()
