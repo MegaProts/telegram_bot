@@ -1,6 +1,11 @@
 from telegram.ext import Updater, CommandHandler
 import random
 import os
+import praw
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Список передбачень
 predictions = [
@@ -31,7 +36,28 @@ def predict(update, context):
         answer = random.choice(predictions)
         update.message.reply_text(answer)
     else:
-        update.message.reply_text("Напиши питання після команди /pred")
+        update.message.reply_text("Напиши питання після команди /predict")
+
+reddit = praw.Reddit(
+    client_id=os.environ.get("REDDIT_CLIENT_ID"),
+    client_secret=os.environ.get("REDDIT_CLIENT_SECRET"),
+    user_agent=os.environ.get("REDDIT_USER_AGENT")
+)
+
+# Функція витягування мемів
+def send_reddit_meme(update, context):
+    subreddit = reddit.subreddit("memes")
+    posts = list(subreddit.hot(limit=50))
+    random.shuffle(posts)
+
+    for post in posts:
+        if not post.stickied and post.url.endswith(('.jpg', '.jpeg', '.png')):
+            update.message.reply_photo(post.url, caption=post.title)
+            return
+
+    update.message.reply_text("Не знайшов мемів 😢")
+
+    
 
 # Основна функція запуску бота
 def main():
@@ -40,6 +66,7 @@ def main():
     dp = updater.dispatcher
 
     dp.add_handler(CommandHandler("pred", predict))
+    dp.add_handler(CommandHandler("meme", send_reddit_meme))
 
     updater.start_polling()
     print("Бот працює...")
